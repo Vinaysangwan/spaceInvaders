@@ -1,0 +1,110 @@
+package main
+
+import "vendor:glfw"
+
+// #############################################################################
+//                           Constants
+// #############################################################################
+WORLD_WIDTH :: 320
+WORLD_HEIGHT :: 180
+
+// #############################################################################
+//                           Structs
+// #############################################################################
+Screen :: enum
+{
+  MENU,
+  PLAY
+}
+
+GameState :: struct
+{
+  currentScreen :Screen,
+  menuScreen :MenuScreen,
+  playScreen :PlayScreen
+}
+
+// #############################################################################
+//                           Gloabls
+// #############################################################################
+gameState :GameState
+
+// #############################################################################
+//                           Functions
+// #############################################################################
+game_init :: proc()
+{
+  // Init Camera
+  {
+    // Game Camera
+    gameCamera := &renderData.gameCamera
+    gameCamera.zoom = 1.0
+    gameCamera.pos = Vec2{WORLD_WIDTH / 2.0, -WORLD_HEIGHT / 2.0}
+    gameCamera.dimensions = Vec2{WORLD_WIDTH, WORLD_HEIGHT}
+
+    // UI Camera
+    uiCamera := &renderData.uiCamera
+    uiCamera.zoom = 1.0
+    uiCamera.pos = Vec2{f32(inputState.windowSize.x) / 2.0, -f32(inputState.windowSize.y) / 2.0}
+    uiCamera.dimensions = Vec2{f32(inputState.windowSize.x), f32(inputState.windowSize.y)}
+  }
+
+  // Init Screen
+  gameState.currentScreen = Screen.MENU
+
+  // Init Current Screen
+  switch(gameState.currentScreen)
+  {
+  case Screen.MENU:
+  {
+    menuScreen_init(&gameState.menuScreen)
+    
+    break
+  } 
+  case Screen.PLAY:
+  {
+    playScreen_init(&gameState.playScreen)
+    
+    break
+  }
+  }
+  
+}
+
+game_update :: proc(dt :f32)
+{
+  switch(gameState.currentScreen)
+  {
+  case Screen.MENU:
+  {
+    menuScreen_update(&gameState.menuScreen, dt)
+    
+    break
+  } 
+  case Screen.PLAY:
+  {
+    playScreen_update(&gameState.playScreen, dt)
+    
+    break
+  }
+  }
+}
+
+game_render :: proc(alpha :f32)
+{
+  switch(gameState.currentScreen)
+  {
+  case Screen.MENU:
+  {
+    menuScreen_render(&gameState.menuScreen, alpha)
+
+    break
+  } 
+  case Screen.PLAY:
+  {
+    playScreen_render(&gameState.playScreen, alpha)
+    
+    break
+  }
+  }
+}
