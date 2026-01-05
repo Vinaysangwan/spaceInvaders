@@ -1,7 +1,9 @@
 package main
 
+import ma "vendor:miniaudio"
+
 // #############################################################################
-//                           Structs
+//                           Sprites
 // #############################################################################
 SpriteID :: enum
 {
@@ -42,4 +44,24 @@ SPRITES :[SpriteID.COUNT]Sprite = {
 
   SpriteID.BG_MENU = {atlasOffset = {0, 544}, size = {1280, 720}},
   SpriteID.BG_PLAY = {atlasOffset = {}, size = {}},
+}
+
+// #############################################################################
+//                           Sounds
+// #############################################################################
+SoundID :: enum
+{
+  BG_MENU,
+  
+  COUNT
+}
+
+Sound :: struct
+{
+  sound :ma.sound,
+  path :cstring
+}
+
+SOUNDS :[SoundID.COUNT]Sound = {
+  SoundID.BG_MENU = {path = "assets/sounds/bg_music.mp3"}
 }

@@ -1,5 +1,6 @@
 package main
 
+import "base:runtime"
 import "core:c"
 import "vendor:glfw"
 
@@ -43,13 +44,16 @@ inputState :InputState
 // #############################################################################
 glfw_key_callback :: proc "c" (window :glfw.WindowHandle, key, scancode, action, mods :c.int)
 {
-  if (action == glfw.PRESS)
+  if(key >= 0 && key < MAX_KEY_COUNT)
   {
-    inputState.keyboard.currentKeys[key] = true
-  }
-  else if(action == glfw.RELEASE)
-  {
-    inputState.keyboard.currentKeys[key] = false
+    if (action == glfw.PRESS)
+    {
+      inputState.keyboard.currentKeys[key] = true
+    }
+    else if(action == glfw.RELEASE)
+    {
+      inputState.keyboard.currentKeys[key] = false
+    }
   }
 }
 

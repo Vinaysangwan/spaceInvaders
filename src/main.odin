@@ -24,6 +24,9 @@ main :: proc()
     return
   }
 
+  // Init Audio
+  audio_init()
+
   // Init Game
   game_init()
 
@@ -64,5 +67,6 @@ main :: proc()
   }
 
   gl_cleanup()
+  audio_cleanup()
   window_cleanup()
 }

@@ -1,10 +1,11 @@
 package main
 
+import "core:math/rand"
+
 // #############################################################################
 //                          Constants
 // #############################################################################
 MAX_BOMB_COUNT :: 100
-BOMB_DROP_TIMER :: 1.0
 BOMB_SPEED :: 1.5
 ENEMY_STOP_TIMER :: 0.5
 
@@ -42,6 +43,7 @@ Enemy :: struct
 
   bombs :Array(Bomb, MAX_BOMB_COUNT),
   bomb_timer :f32,
+  bomb_drop_timer :f32
 }
 
 // #############################################################################
@@ -67,6 +69,7 @@ enemy_init :: proc (enemy :^Enemy, pos: Vec2)
 
   enemy.bomb_timer = 0.0
   enemy.bombs.count = 0
+  enemy.bomb_drop_timer = rand.float32() + 2.0
 }
 
 enemy_update :: proc(enemy :^Enemy, dt :f32)
@@ -150,9 +153,9 @@ enemy_update :: proc(enemy :^Enemy, dt :f32)
   }
 
   // Drop Bombs
-  if(enemy.bomb_timer >= BOMB_DROP_TIMER)
+  if(enemy.bomb_timer >= enemy.bomb_drop_timer)
   {
-    enemy.bomb_timer -= BOMB_DROP_TIMER
+    enemy.bomb_timer -= enemy.bomb_drop_timer
     if(enemy.bombs.count < MAX_BOMB_COUNT)
     {
       bomb :Bomb
