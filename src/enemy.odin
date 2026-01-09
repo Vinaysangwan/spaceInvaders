@@ -1,23 +1,13 @@
 package main
 
-import "core:math/rand"
-
 // #############################################################################
 //                          Constants
 // #############################################################################
-MAX_BOMB_COUNT :: 100
-BOMB_SPEED :: 1.5
 ENEMY_STOP_TIMER :: 0.5
 
 // #############################################################################
 //                          Structs
 // #############################################################################
-Bomb :: struct
-{
-  prevPos :Vec2,
-  pos :Vec2,
-}
-
 EnemyState :: enum
 {
   MOVE_X,
@@ -40,15 +30,16 @@ Enemy :: struct
   movement :Vec2,
   speed :f32,
   stop_timer :f32,
-
-  bombs :Array(Bomb, MAX_BOMB_COUNT),
-  bomb_timer :f32,
-  bomb_drop_timer :f32
 }
 
 // #############################################################################
 //                          Functions
 // #############################################################################
+enemy_get_collision_area :: proc(enemy :^Enemy) -> Rect
+{
+  return Rect{enemy.pos, Vec2{30, 20}}
+}
+
 enemy_init :: proc (enemy :^Enemy, pos: Vec2)
 {
   enemy.spriteID = SpriteID.SHIP2
@@ -66,18 +57,11 @@ enemy_init :: proc (enemy :^Enemy, pos: Vec2)
   enemy.movement.y = 1
   enemy.speed = 1
   enemy.stop_timer = 0
-
-  enemy.bomb_timer = 0.0
-  enemy.bombs.count = 0
-  enemy.bomb_drop_timer = rand.float32() + 2.0
 }
 
 enemy_update :: proc(enemy :^Enemy, dt :f32)
 {
   enemy.prevPos = enemy.pos
-  
-  // Update bomb Timer
-  enemy.bomb_timer += dt
 
   // Handle States
   switch(enemy.state)
@@ -151,52 +135,10 @@ enemy_update :: proc(enemy :^Enemy, dt :f32)
     break
   }
   }
-
-  // Drop Bombs
-  if(enemy.bomb_timer >= enemy.bomb_drop_timer)
-  {
-    enemy.bomb_timer -= enemy.bomb_drop_timer
-    if(enemy.bombs.count < MAX_BOMB_COUNT)
-    {
-      bomb :Bomb
-      bomb.pos = Vec2{enemy.pos.x, enemy.pos.y + 10}
-      bomb.prevPos = bomb.pos
-
-      Array_add(&enemy.bombs, &bomb)
-    }
-  }
-
-  // Update Bombs
-  b :i32 = 0
-  for b < enemy.bombs.count
-  {
-    bomb := &enemy.bombs.elements[b]
-
-    bomb.prevPos = bomb.pos
-    bomb.pos.y += BOMB_SPEED
-
-    if(bomb.pos.y >= WORLD_HEIGHT + 50)
-    {
-      Array_swap_remove(&enemy.bombs, b)
-    }
-    else
-    {
-      b += 1
-    }
-  }
 }
 
 enemy_render :: proc(enemy :^Enemy, alpha :f32)
 {
   enemyRenderPos := lerp_vec2(alpha, enemy.prevPos, enemy.pos)
   draw_sprite(enemy.spriteID, enemyRenderPos)
-
-  // Draw Bombs
-  for i :i32=0; i <enemy.bombs.count; i+=1
-  {
-    bomb := &enemy.bombs.elements[i]
-
-    bombRenderPos := lerp_vec2(alpha, bomb.prevPos, bomb.pos)
-    draw_sprite(SpriteID.BOMB, bombRenderPos)
-  }
 }

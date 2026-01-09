@@ -208,12 +208,18 @@ orthogonal_matrix :: proc(left, right, top, bottom :f32) -> Mat4f
 }
 
 // #############################################################################
-//                           Rects
+//                           Shapes
 // #############################################################################
 Rect :: struct
 {
   pos :Vec2,
   size :Vec2
+}
+
+Circle :: struct
+{
+  pos :Vec2,
+  radius :f32
 }
 
 // #############################################################################
@@ -235,15 +241,25 @@ lerp_vec2 :: proc(alpha :f32, prevVec, currentVec :Vec2) -> Vec2
 // #############################################################################
 //                           Collisions
 // #############################################################################
-Collision_Rect_Point :: proc(rect :^Rect, point :Vec2) -> bool
+collision_Rect_Point :: proc(rect :^Rect, point :Vec2) -> bool
 {
-  if(point.x > rect.pos.x - rect.size.x / 2 && point.x < rect.pos.x + rect.size.x / 2 &&
-     point.y > rect.pos.y - rect.size.y / 2 &&  point.y < rect.pos.y + rect.size.y / 2)
-  {
-    return true
-  }
-  else
-  {
-    return false
-  }
+  return (point.x > rect.pos.x - rect.size.x / 2 && point.x < rect.pos.x + rect.size.x / 2 &&
+          point.y > rect.pos.y - rect.size.y / 2 &&  point.y < rect.pos.y + rect.size.y / 2)
+}
+
+collision_Rects :: proc(r1 :^Rect, r2 :^Rect) -> bool
+{
+  return (r1.pos.x - r1.size.x / 2 < r2.pos.x + r2.size.x / 2 && r1.pos.x + r1.size.x / 2 > r2.pos.x - r2.size.x / 2 && 
+          r1.pos.y - r1.size.y / 2 < r2.pos.y + r2.size.y / 2 && r1.pos.y + r1.size.y / 2 > r2.pos.y - r2.size.y / 2)
+}
+
+collision_Rect_Circle :: proc(r :^Rect, c :^Circle) -> bool
+{
+  pX := clamp(c.pos.x, r.pos.x - r.size.x / 2, r.pos.x + r.size.x / 2)
+  pY := clamp(c.pos.y, r.pos.y - r.size.y / 2, r.pos.y + r.size.y / 2)
+
+  dX := pX - c.pos.x
+  dY := pY - c.pos.y
+  
+  return c.radius * c.radius <= dX * dX + dY * dY
 }

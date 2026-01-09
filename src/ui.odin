@@ -48,5 +48,5 @@ button_pressed :: proc(button :^Button, mouse_button :i32 = glfw.MOUSE_BUTTON_LE
 
 button_hover :: proc(button :^Button) -> bool
 {
-  return Collision_Rect_Point(&button.rect, mouse_pos())
+  return collision_Rect_Point(&button.rect, mouse_pos())
 }

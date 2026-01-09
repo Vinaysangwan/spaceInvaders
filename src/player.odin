@@ -7,7 +7,7 @@ import "vendor:glfw"
 // #############################################################################
 MAX_BULLET_COUNT :: 300
 BULLET_SPEED :: 2.5
-SHOOT_COOLDOWN_TIME :: 0.2
+SHOOT_COOLDOWN_TIME :: 0.5
 
 // #############################################################################
 //                          Structs
@@ -21,6 +21,8 @@ Bullet :: struct
 Player :: struct
 {
   spriteID :SpriteID,
+  alive :bool,
+  
   size :Vec2,
 
   prevPos :Vec2,
@@ -36,9 +38,21 @@ Player :: struct
 // #############################################################################
 //                          Functions 
 // #############################################################################
+player_get_collision_area :: proc(player :^Player) -> Rect
+{
+  return Rect{player.pos, Vec2{32, 15}}
+}
+
+player_get_bullet_collision_area :: proc(bullet :^Bullet) -> Rect
+{
+  return Rect{bullet.pos, Vec2{2, 5}}
+}
+
 player_init :: proc(player :^Player)
 {
   player.spriteID = SpriteID.SHIP1
+  player.alive = true
+
   player.size = ivec2_f(SPRITES[player.spriteID].size)
 
   player.pos = Vec2{WORLD_WIDTH / 2, WORLD_HEIGHT - player.size.y / 2}
@@ -55,11 +69,11 @@ player_update :: proc(player :^Player, dt :f32)
 {
   player.movement = {0, 0}
 
-  if(key_down(glfw.KEY_A))
+  if(key_down(glfw.KEY_LEFT))
   {
     player.movement.x -= player.speed
   }
-  if(key_down(glfw.KEY_D))
+  if(key_down(glfw.KEY_RIGHT))
   {
     player.movement.x += player.speed
   }
