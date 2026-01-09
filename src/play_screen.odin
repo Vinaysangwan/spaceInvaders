@@ -1,5 +1,6 @@
 package main
 
+import "core:math/rand"
 import "vendor:glfw"
 
 // #############################################################################
@@ -13,6 +14,7 @@ MAX_ENEMY_COUNT :: (MAX_ENEMY_COUNT_X * MAX_ENEMY_COUNT_Y)
 // Bomb
 MAX_BOMB_COUNT :: 50
 BOMB_DROP_TIMER :: 1.0
+BOMB_SPEED :: 1.5
 
 // #############################################################################
 //                           Structs
@@ -27,14 +29,14 @@ PlayScreen :: struct
 {
   player :Player,
   enemies :Array(Enemy, MAX_ENEMY_COUNT),
-  bomb :Array(Bomb, MAX_BOMB_COUNT),
-  bomb_drop_timer :f32
+  bombs :Array(Bomb, MAX_BOMB_COUNT),
+  bombDropTimer :f32
 }
 
 // #############################################################################
 //                           Functions
 // #############################################################################
-bomb_get_collison_area :: proc(bomb :^Bomb) -> Circle
+bomb_get_collision_area :: proc(bomb :^Bomb) -> Circle
 {
   return Circle{bomb.pos, 3.5}
 }
@@ -54,7 +56,7 @@ playScreen_init :: proc(playScreen :^PlayScreen)
     }
   }
 
-  playScreen.bomb_drop_timer = 0.0
+  playScreen.bombDropTimer = 0.0
 }
 
 playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
@@ -78,7 +80,53 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
     enemy_update(&playScreen.enemies.elements[i], dt)
   }
 
-  // Collision Between enemy and bullet
+  // Drop Bomb
+  playScreen.bombDropTimer += dt
+  if(playScreen.bombDropTimer >= BOMB_DROP_TIMER)
+  {
+    playScreen.bombDropTimer -= BOMB_DROP_TIMER
+
+    if(playScreen.enemies.count > 0)
+    {
+      choosenEnemy := rand.choice(playScreen.enemies.elements[0:playScreen.enemies.count])
+
+      bomb :Bomb
+      bomb.pos = Vec2{choosenEnemy.pos.x, choosenEnemy.pos.y + 8}
+      bomb.prePos = bomb.pos
+
+      Array_add(&playScreen.bombs, &bomb)
+    }
+  }
+
+  // Update Bombs & collision player and bombs
+  bomb_idx :i32 = 0
+  player := &playScreen.player
+  player_collision_area := player_get_collision_area(player)
+  for bomb_idx < playScreen.bombs.count
+  {
+    bomb := &playScreen.bombs.elements[bomb_idx]
+
+    bomb.prePos.y = bomb.pos.y
+    bomb.pos.y += BOMB_SPEED
+
+    bomb_collision_area := bomb_get_collision_area(bomb)
+
+    if(bomb.pos.y > WORLD_HEIGHT + 15)
+    {
+      Array_swap_remove(&playScreen.bombs, bomb_idx)
+    }
+    else if(player.alive && collision_Rect_Circle(&player_collision_area, &bomb_collision_area))
+    {
+      player_kill(player)
+      Array_swap_remove(&playScreen.bombs, bomb_idx)
+    }
+    else
+    {
+      bomb_idx += 1
+    }
+  }
+
+  // Collision enemy and bullet
   bullet_idx :i32 = 0
   for bullet_idx < playScreen.player.bullets.count
   {
@@ -110,19 +158,27 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
       bullet_idx += 1
     }
   }
-
-  // Collsion Between player and bombs
 }
 
 playScreen_render :: proc(playScreen :^PlayScreen, alpha :f32)
 {
+  // Render Player
   if(playScreen.player.alive)
   {
     player_render(&playScreen.player, alpha)
   }
 
-  for i: i32 = 0; i < playScreen.enemies.count; i += 1
+  // Render Enemies
+  for i :i32 = 0; i < playScreen.enemies.count; i += 1
   {
     enemy_render(&playScreen.enemies.elements[i], alpha)
+  }
+
+  // Render Bombs
+  for i :i32 = 0; i < playScreen.bombs.count; i += 1
+  {
+    bombRenderPos := lerp_vec2(alpha, playScreen.bombs.elements[i].prePos, playScreen.bombs.elements[i].pos)
+    
+    draw_sprite(SpriteID.BOMB, bombRenderPos)
   }
 }

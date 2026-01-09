@@ -119,6 +119,12 @@ player_update :: proc(player :^Player, dt :f32)
   }
 }
 
+player_kill :: proc(player :^Player)
+{
+  player.alive = false
+  Array_clear(&player.bullets)
+}
+
 player_render :: proc(player :^Player, alpha :f32)
 {
   playerRenderPos := lerp_vec2(alpha, player.prevPos, player.pos)

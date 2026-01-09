@@ -261,5 +261,5 @@ collision_Rect_Circle :: proc(r :^Rect, c :^Circle) -> bool
   dX := pX - c.pos.x
   dY := pY - c.pos.y
   
-  return c.radius * c.radius <= dX * dX + dY * dY
+  return c.radius * c.radius >= dX * dX + dY * dY
 }
