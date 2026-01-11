@@ -1,7 +1,5 @@
 package main
 
-import "vendor:glfw"
-
 // #############################################################################
 //                           Constants
 // #############################################################################
@@ -21,7 +19,7 @@ GameState :: struct
 {
   currentScreen :Screen,
   menuScreen :MenuScreen,
-  playScreen :PlayScreen
+  playScreen :PlayScreen,
 }
 
 // #############################################################################

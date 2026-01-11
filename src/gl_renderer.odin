@@ -1,5 +1,6 @@
 package main
 
+import fs "vendor:fontstash"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 import "base:runtime"
@@ -29,7 +30,7 @@ GLContext :: struct
 glContext :GLContext
 
 // #############################################################################
-//                           Functions
+//                           Functions(Internal)
 // #############################################################################
 gl_error_callback :: proc "c" (source: u32, type: u32, id: u32, severity: u32, 
                                length: i32, message: cstring, userParam: rawptr)
@@ -80,6 +81,9 @@ gl_get_ShaderID :: proc(shaderPath: string, type :u32) -> u32
   return shaderID
 }
 
+// #############################################################################
+//                           Functions(External)
+// #############################################################################
 gl_init :: proc() -> bool
 { 
   // Load OpenGL Functions
@@ -184,39 +188,40 @@ gl_render :: proc()
   gl.ClearColor(0.2, 0.3, 0.3, 1.0)
   gl.Clear(gl.COLOR_BUFFER_BIT)
 
-  // Send OrthoProjection to GPU
+  // Game Layer
   {
-    camera :Camera2D
+    // Camera
+    camera := renderData.gameCamera
 
-    switch(gameState.currentScreen)
-    {
-    case Screen.MENU:
-    {
-      camera = renderData.uiCamera
-      
-      break
-    }
-    case Screen.PLAY:
-    {
-      camera = renderData.gameCamera
-      
-      break
-    }
-    }
-    
     orthoMatrix := orthogonal_matrix(camera.pos.x - camera.dimensions.x / 2.0, camera.pos.x + camera.dimensions.x / 2.0,
                                          camera.pos.y - camera.dimensions.y / 2.0, camera.pos.y + camera.dimensions.y / 2.0)
     
     gl.UniformMatrix4fv(glContext.orthoProjectionLocation, 1, gl.FALSE, &orthoMatrix.elements[0])
-  }
   
-  // Copy Transforms into GPU
-  {
+    // Transform
     gl.BufferSubData(gl.SHADER_STORAGE_BUFFER, 0, int(size_of(Transform) * renderData.transforms.count), &renderData.transforms.elements[0])
 
     gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, renderData.transforms.count)
 
     renderData.transforms.count = 0
+  }
+
+  // UI Layer
+  {
+    // Camera
+    camera := renderData.uiCamera
+
+    orthoMatrix := orthogonal_matrix(camera.pos.x - camera.dimensions.x / 2.0, camera.pos.x + camera.dimensions.x / 2.0,
+                                         camera.pos.y - camera.dimensions.y / 2.0, camera.pos.y + camera.dimensions.y / 2.0)
+    
+    gl.UniformMatrix4fv(glContext.orthoProjectionLocation, 1, gl.FALSE, &orthoMatrix.elements[0])
+    
+    // Transform
+    gl.BufferSubData(gl.SHADER_STORAGE_BUFFER, 0, int(size_of(Transform) * renderData.uiTransforms.count), &renderData.uiTransforms.elements[0])
+
+    gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, renderData.uiTransforms.count)
+
+    renderData.uiTransforms.count = 0
   }
 }
 

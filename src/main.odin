@@ -15,7 +15,8 @@ main :: proc()
   {
     return
   }
-  enable_vSync(true)
+  window_set_icon("assets/textures/window_icon.png")
+  enable_vSync(false)
 
   // Init OpenGL
   if(!gl_init())

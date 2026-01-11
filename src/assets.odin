@@ -31,7 +31,7 @@ Sprite :: struct
 }
 
 SPRITES :[SpriteID.COUNT]Sprite = {
-  SpriteID.QUAD = {atlasOffset = {0, 48}, size = {1, 1}},
+  SpriteID.QUAD = {atlasOffset = {0, 64}, size = {1, 1}},
   
   SpriteID.SHIP1 = {atlasOffset = {0, 0}, size = {32, 32}},
   SpriteID.SHIP2 = {atlasOffset = {32, 0}, size = {32, 32}},
@@ -42,8 +42,8 @@ SPRITES :[SpriteID.COUNT]Sprite = {
   SpriteID.BUTTON_PLAY = {atlasOffset = {96, 0}, size = {128, 64}},
   SpriteID.BUTTON_QUIT = {atlasOffset = {256, 0}, size = {128, 64}},
 
-  SpriteID.BG_MENU = {atlasOffset = {0, 544}, size = {1280, 720}},
-  SpriteID.BG_PLAY = {atlasOffset = {}, size = {}},
+  SpriteID.BG_MENU = {atlasOffset = {0, 96}, size = {320, 180}},
+  SpriteID.BG_PLAY = {atlasOffset = {352, 96}, size = {320, 180}},
 }
 
 // #############################################################################

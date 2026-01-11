@@ -27,13 +27,13 @@ menuScreen_init :: proc(menuScreen :^MenuScreen)
   // Init Play Button
   menuScreen.playButton = {
     spriteID = SpriteID.BUTTON_PLAY,
-    rect = {pos = {f32(inputState.windowSize.x) / 2, 200}, size = {108, 58}}
+    rect = {pos = {f32(inputState.windowSize.x) / 2, 300}, size = {128, 64}}
   }
 
   // Init Quit Button
   menuScreen.quitButton = {
     spriteID = SpriteID.BUTTON_QUIT,
-    rect = {pos = {f32(inputState.windowSize.x) / 2, 400}, size = {108, 58}}
+    rect = {pos = {f32(inputState.windowSize.x) / 2, 400}, size = {128, 64}}
   }
 
   // Init BG Music ID
@@ -62,6 +62,6 @@ menuScreen_update :: proc(menuScreen :^MenuScreen, dt :f32)
 menuScreen_render :: proc(menuScreen :^MenuScreen, alpha :f32)
 {
   set_background(SpriteID.BG_MENU)
-  draw_sprite(menuScreen.playButton.spriteID, menuScreen.playButton.rect.pos)
-  draw_sprite(menuScreen.quitButton.spriteID, menuScreen.quitButton.rect.pos)
+  draw_ui_button(&menuScreen.playButton)
+  draw_ui_button(&menuScreen.quitButton)
 }

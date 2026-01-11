@@ -1,5 +1,6 @@
 package main
 
+import fs "vendor:fontstash"
 import "core:math/rand"
 import "vendor:glfw"
 
@@ -30,7 +31,9 @@ PlayScreen :: struct
   player :Player,
   enemies :Array(Enemy, MAX_ENEMY_COUNT),
   bombs :Array(Bomb, MAX_BOMB_COUNT),
-  bombDropTimer :f32
+  bombDropTimer :f32,
+
+  score :i32
 }
 
 // #############################################################################
@@ -57,6 +60,8 @@ playScreen_init :: proc(playScreen :^PlayScreen)
   }
 
   playScreen.bombDropTimer = 0.0
+
+  playScreen.score = 0
 }
 
 playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
@@ -88,10 +93,10 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
 
     if(playScreen.enemies.count > 0)
     {
-      choosenEnemy := rand.choice(playScreen.enemies.elements[0:playScreen.enemies.count])
+      chosenEnemy := rand.choice(playScreen.enemies.elements[0:playScreen.enemies.count])
 
       bomb :Bomb
-      bomb.pos = Vec2{choosenEnemy.pos.x, choosenEnemy.pos.y + 8}
+      bomb.pos = Vec2{chosenEnemy.pos.x, chosenEnemy.pos.y + 8}
       bomb.prePos = bomb.pos
 
       Array_add(&playScreen.bombs, &bomb)
@@ -118,6 +123,7 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
     else if(player.alive && collision_Rect_Circle(&player_collision_area, &bomb_collision_area))
     {
       player_kill(player)
+      SM_TRACE("Final Score: {}", playScreen.score)
       Array_swap_remove(&playScreen.bombs, bomb_idx)
     }
     else
@@ -140,6 +146,9 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
       if(collision_Rects(&enemy_rect, &bullet_rect))
       {
         hit = true
+        playScreen.score += 1
+        SM_TRACE("Score: {}", playScreen.score)
+        
         Array_swap_remove(&playScreen.enemies, enemy_idx)
         break
       }
@@ -162,6 +171,9 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
 
 playScreen_render :: proc(playScreen :^PlayScreen, alpha :f32)
 {
+  // Render Background
+  set_background(SpriteID.BG_PLAY)
+  
   // Render Player
   if(playScreen.player.alive)
   {

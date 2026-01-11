@@ -1,9 +1,10 @@
 package main
 
 import "core:fmt"
-import "vendor:glfw"
-import "vendor:OpenGL"
 import "base:runtime"
+import "vendor:glfw"
+import gl "vendor:OpenGL"
+import "vendor:stb/image"
 
 // #############################################################################
 //                           Globals
@@ -22,7 +23,7 @@ error_callback :: proc "c" (error :i32, msg :cstring)
 
 framebuffer_size_callback :: proc "c" (window :glfw.WindowHandle, width, height :i32)
 {
-  OpenGL.Viewport(0, 0, width, height)
+  gl.Viewport(0, 0, width, height)
 }
 
 window_create :: proc(title: cstring, width, height: i32, isResizable: bool) -> bool
@@ -89,6 +90,20 @@ window_update :: proc()
 window_swap_buffers :: proc()
 {
   glfw.SwapBuffers(window)
+}
+
+window_set_icon :: proc(iconFilePath :cstring)
+{
+  width, height, nChannels :i32
+  img := image.load(iconFilePath, &width, &height, &nChannels, 4)
+
+  icon :glfw.Image
+  icon.width = width
+  icon.height = height
+  icon.pixels = img
+
+  glfw.SetWindowIcon(window, []glfw.Image{icon})
+  image.image_free(img)
 }
 
 window_cleanup :: proc()
