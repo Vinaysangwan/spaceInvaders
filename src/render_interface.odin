@@ -106,9 +106,8 @@ color_normal_opengl :: proc(c :Vec4) -> Vec4
 }
 
 // #############################################################################
-//                           Functions(External)
+//                           Functions(Game Rendering)
 // #############################################################################
-// Game Rendering
 draw_rect :: proc(pos, size: Vec2, color := Vec4{255, 255, 255, 255})
 {
   transform := get_transform(SpriteID.QUAD, pos, size, color_normal_opengl(color))
@@ -139,16 +138,24 @@ set_background :: proc(spriteID :SpriteID, scale :f32 = 1.0, tintColor := Vec4{2
   Array_add(&renderData.transforms, &transform)
 }
 
-// UI Rendering
-draw_ui_button :: proc(button :^Button, tintColor := Vec4{255, 255, 255, 255})
+// #############################################################################
+//                           Functions(Ui Rendering)
+// #############################################################################
+draw_ui_rect :: proc(pos :Vec2, size :Vec2, tintColor := Vec4{255, 255, 255, 255})
 {
-  transform := get_transform(button.spriteID, button.rect.pos, button.rect.size, color_normal_opengl(tintColor))
+  transform := get_transform(SpriteID.QUAD, pos, size, color_normal_opengl(tintColor))
   Array_add(&renderData.uiTransforms, &transform)
 }
 
-draw_ui_rect :: proc(pos, size :Vec2, color := Vec4{255, 255, 255, 255})
+draw_ui_sprite :: proc(spriteID :SpriteID, pos :Vec2, scale :f32 = 1.0, tintColor := Vec4{255, 255, 255, 255})
 {
-  transform := get_transform(SpriteID.QUAD, pos, size, color_normal_opengl(color))
+  transform := get_transform_scale(spriteID, pos, scale, color_normal_opengl(tintColor))
+  Array_add(&renderData.uiTransforms, &transform)
+}
+
+draw_ui_button :: proc(button :^Button, tintColor := Vec4{255, 255, 255, 255})
+{
+  transform := get_transform(button.spriteID, button.rect.pos, button.rect.size, color_normal_opengl(tintColor))
   Array_add(&renderData.uiTransforms, &transform)
 }
 

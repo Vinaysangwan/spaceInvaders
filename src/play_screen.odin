@@ -25,14 +25,33 @@ Bomb :: struct
   prePos :Vec2
 }
 
+PlayState :: enum
+{
+  Play,
+  Menu,
+  GameOver,
+  GameWon
+}
+
 PlayScreen :: struct
 {
+  state :PlayState,
+  
   player :Player,
   enemies :Array(Enemy, MAX_ENEMY_COUNT),
   bombs :Array(Bomb, MAX_BOMB_COUNT),
   bombDropTimer :f32,
 
-  score :i32
+  score :i32,
+
+  // Shared Buttons
+  homeButton :Button,
+  
+  // Menu Buttons
+  continueButton :Button,
+  
+  // Game Won Buttons
+  playAgainButton :Button,
 }
 
 // #############################################################################
@@ -45,6 +64,9 @@ bomb_get_collision_area :: proc(bomb :^Bomb) -> Circle
 
 playScreen_init :: proc(playScreen :^PlayScreen)
 {
+  // Init Play Screen State
+  playScreen.state = PlayState.Play
+  
   // Init Player
   player_init(&playScreen.player)
   
@@ -61,107 +83,172 @@ playScreen_init :: proc(playScreen :^PlayScreen)
   playScreen.bombDropTimer = 0.0
 
   playScreen.score = 0
+
+  // Init Buttons
+  {
+    // Home Button
+    playScreen.homeButton = Button{
+      spriteID = SpriteID.BUTTON_HOME,
+      rect = Rect{pos = Vec2{f32(inputState.windowSize.x) / 2, f32(inputState.windowSize.y) / 2 + 50}, size = Vec2{128, 64}}
+    }
+
+    // Continue Button
+    playScreen.continueButton = Button{
+      spriteID = SpriteID.BUTTON_CONTINUE,
+      rect = Rect{pos = Vec2{f32(inputState.windowSize.x) / 2, f32(inputState.windowSize.y) / 2 - 50}, size = Vec2{128, 64}}
+    }
+
+    // Play Again Button
+    playScreen.playAgainButton = Button{
+      spriteID = SpriteID.BUTTON_PLAY_AGAIN,
+      rect = Rect{pos = Vec2{f32(inputState.windowSize.x) / 2, f32(inputState.windowSize.y) / 2 - 50}, size = Vec2{128, 64}}
+    }
+  }
 }
 
 playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
-{ 
-  // Change Current Screen
-  if(key_pressed(glfw.KEY_ESCAPE))
-  {
-    gameState.currentScreen = Screen.MENU
-    menuScreen_init(&gameState.menuScreen)
-  }
-  
-  // Update Player
-  if(playScreen.player.alive)
-  {
-    player_update(&playScreen.player, dt) 
-  }
+{
+   
 
-  // Update Enemies
-  for i: i32 = 0; i < playScreen.enemies.count; i += 1
+  // Handle States
+  switch(playScreen.state)
   {
-    enemy_update(&playScreen.enemies.elements[i], dt)
-  }
-
-  // Drop Bomb
-  playScreen.bombDropTimer += dt
-  if(playScreen.bombDropTimer >= BOMB_DROP_TIMER)
+  case PlayState.Play:
   {
-    playScreen.bombDropTimer -= BOMB_DROP_TIMER
-
-    if(playScreen.enemies.count > 0)
+    // Change to States
+    if(key_pressed(glfw.KEY_ESCAPE))  // Menu
     {
-      chosenEnemy := rand.choice(playScreen.enemies.elements[0:playScreen.enemies.count])
-
-      bomb :Bomb
-      bomb.pos = Vec2{chosenEnemy.pos.x, chosenEnemy.pos.y + 8}
-      bomb.prePos = bomb.pos
-
-      Array_add(&playScreen.bombs, &bomb)
+      playScreen.state = PlayState.Menu
     }
-  }
-
-  // Update Bombs & collision player and bombs
-  bomb_idx :i32 = 0
-  player := &playScreen.player
-  player_collision_area := player_get_collision_area(player)
-  for bomb_idx < playScreen.bombs.count
-  {
-    bomb := &playScreen.bombs.elements[bomb_idx]
-
-    bomb.prePos.y = bomb.pos.y
-    bomb.pos.y += BOMB_SPEED
-
-    bomb_collision_area := bomb_get_collision_area(bomb)
-
-    if(bomb.pos.y > WORLD_HEIGHT + 15)
+    else if(playScreen.score == 10)   // Game Won
     {
-      Array_swap_remove(&playScreen.bombs, bomb_idx)
+      playScreen.state = PlayState.GameWon
     }
-    else if(player.alive && collision_Rect_Circle(&player_collision_area, &bomb_collision_area))
-    {
-      player_kill(player)
-      Array_swap_remove(&playScreen.bombs, bomb_idx)
-    }
-    else
-    {
-      bomb_idx += 1
-    }
-  }
 
-  // Collision enemy and bullet
-  bullet_idx :i32 = 0
-  for bullet_idx < playScreen.player.bullets.count
-  {
-    enemy_idx :i32 = 0
-    hit := false
-    for enemy_idx < playScreen.enemies.count
+    // Update Player
+    if(playScreen.player.alive)
     {
-      enemy_rect := enemy_get_collision_area(&playScreen.enemies.elements[enemy_idx])
-      bullet_rect := player_get_bullet_collision_area(&playScreen.player.bullets.elements[bullet_idx])
-      
-      if(collision_Rects(&enemy_rect, &bullet_rect))
+      player_update(&playScreen.player, dt) 
+    }
+
+    // Update Enemies
+    for i: i32 = 0; i < playScreen.enemies.count; i += 1
+    {
+      enemy_update(&playScreen.enemies.elements[i], dt)
+    }
+
+    // Drop Bomb
+    playScreen.bombDropTimer += dt
+    if(playScreen.bombDropTimer >= BOMB_DROP_TIMER)
+    {
+      playScreen.bombDropTimer -= BOMB_DROP_TIMER
+
+      if(playScreen.enemies.count > 0)
       {
-        hit = true
-        playScreen.score += 1
-        
-        Array_swap_remove(&playScreen.enemies, enemy_idx)
-        break
+        chosenEnemy := rand.choice(playScreen.enemies.elements[0:playScreen.enemies.count])
+
+        bomb :Bomb
+        bomb.pos = Vec2{chosenEnemy.pos.x, chosenEnemy.pos.y + 8}
+        bomb.prePos = bomb.pos
+
+        Array_add(&playScreen.bombs, &bomb)
+      }
+    }
+
+    // Update Bombs & collision player and bombs
+    bomb_idx :i32 = 0
+    player := &playScreen.player
+    player_collision_area := player_get_collision_area(player)
+    for bomb_idx < playScreen.bombs.count
+    {
+      bomb := &playScreen.bombs.elements[bomb_idx]
+
+      bomb.prePos.y = bomb.pos.y
+      bomb.pos.y += BOMB_SPEED
+
+      bomb_collision_area := bomb_get_collision_area(bomb)
+
+      if(bomb.pos.y > WORLD_HEIGHT + 15)
+      {
+        Array_swap_remove(&playScreen.bombs, bomb_idx)
+      }
+      else if(player.alive && collision_Rect_Circle(&player_collision_area, &bomb_collision_area))
+      {
+        player_kill(player)
+        Array_swap_remove(&playScreen.bombs, bomb_idx)
+
+        playScreen.state = PlayState.GameOver
       }
       else
       {
-        enemy_idx += 1 
+        bomb_idx += 1
       }
     }
 
-    if(hit)
+    // Collision enemy and bullet
+    bullet_idx :i32 = 0
+    for bullet_idx < playScreen.player.bullets.count
     {
-      Array_swap_remove(&playScreen.player.bullets, bullet_idx)
+      enemy_idx :i32 = 0
+      hit := false
+      for enemy_idx < playScreen.enemies.count
+      {
+        enemy_rect := enemy_get_collision_area(&playScreen.enemies.elements[enemy_idx])
+        bullet_rect := player_get_bullet_collision_area(&playScreen.player.bullets.elements[bullet_idx])
+        
+        if(collision_Rects(&enemy_rect, &bullet_rect))
+        {
+          hit = true
+          playScreen.score += 1
+          
+          Array_swap_remove(&playScreen.enemies, enemy_idx)
+          break
+        }
+        else
+        {
+          enemy_idx += 1 
+        }
+      }
+
+      if(hit)
+      {
+        Array_swap_remove(&playScreen.player.bullets, bullet_idx)
+      }
+      else
+      {
+        bullet_idx += 1
+      }
     }
-    else
+  }
+
+  case PlayState.Menu:
+  {
+    if (button_pressed(&playScreen.continueButton) || key_pressed(glfw.KEY_ESCAPE))
     {
-      bullet_idx += 1
+      playScreen.state = PlayState.Play
+    }
+  }
+  
+  case PlayState.GameOver:
+  {
+
+  }
+
+  case PlayState.GameWon:
+  {
+    if (button_pressed(&playScreen.playAgainButton))
+    {
+      playScreen_init(playScreen)
+    }
+  }
+  }
+  
+  if(playScreen.state != PlayState.Play)
+  {
+    if(button_pressed(&playScreen.homeButton))
+    {
+      gameState.currentScreen = Screen.MENU
+      menuScreen_init(&gameState.menuScreen)
     }
   }
 }
@@ -183,14 +270,42 @@ playScreen_render :: proc(playScreen :^PlayScreen, alpha :f32)
     enemy_render(&playScreen.enemies.elements[i], alpha)
   }
 
-  // Render Bombs
-  for i :i32 = 0; i < playScreen.bombs.count; i += 1
+  if (playScreen.state != PlayState.Play)
   {
-    bombRenderPos := lerp_vec2(alpha, playScreen.bombs.elements[i].prePos, playScreen.bombs.elements[i].pos)
-    
-    draw_sprite(SpriteID.BOMB, bombRenderPos)
+    draw_ui_sprite(SpriteID.UI_BLOCK, Vec2{f32(inputState.windowSize.x) / 2, f32(inputState.windowSize.y) / 2})
+
+    draw_ui_button(&playScreen.homeButton)
   }
 
+  switch(playScreen.state)
+  {
+  case PlayState.Play:
+  {
+    // Render Bombs
+    for i :i32 = 0; i < playScreen.bombs.count; i += 1
+    {
+      bombRenderPos := lerp_vec2(alpha, playScreen.bombs.elements[i].prePos, playScreen.bombs.elements[i].pos)
+      
+      draw_sprite(SpriteID.BOMB, bombRenderPos)
+    }
+  }
+
+  case PlayState.Menu:
+  {
+    draw_ui_button(&playScreen.continueButton)
+  }
+ 
+  case PlayState.GameOver:
+  {
+
+  }
+  
+  case PlayState.GameWon:
+  {
+    draw_ui_button(&playScreen.playAgainButton)
+  }
+ }
+  
   // Render UI
   draw_format_ui_text(Vec2{0, 16}, 2, Vec4{255, 0, 0, 255}, "Score: {}", playScreen.score)
 }
