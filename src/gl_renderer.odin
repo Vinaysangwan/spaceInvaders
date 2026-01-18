@@ -1,7 +1,6 @@
 package main
 
 import "core:mem"
-import "core:log"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 import "vendor:stb/image"
