@@ -177,6 +177,7 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
         player_kill(player)
         Array_swap_remove(&playScreen.bombs, bomb_idx)
 
+        audio_play(SoundID.DESTROY)
         playScreen.state = PlayState.GameOver
       }
       else
@@ -202,6 +203,7 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
           playScreen.score += 1
           
           Array_swap_remove(&playScreen.enemies, enemy_idx)
+          audio_play(SoundID.DESTROY)
           break
         }
         else

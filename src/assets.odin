@@ -62,6 +62,8 @@ SPRITES :[SpriteID.COUNT]Sprite = {
 SoundID :: enum
 {
   BG_MENU,
+  SHOOT,
+  DESTROY,
   
   COUNT
 }
@@ -73,5 +75,7 @@ Sound :: struct
 }
 
 SOUNDS :[SoundID.COUNT]Sound = {
-  SoundID.BG_MENU = {path = "assets/sounds/bg_music.mp3"}
+  SoundID.BG_MENU = {path = "assets/sounds/bg_music.mp3"},
+  SoundID.SHOOT = {path = "assets/sounds/shoot_sound.wav"},
+  SoundID.DESTROY = {path = "assets/sounds/destroy_sound.wav"}, 
 }

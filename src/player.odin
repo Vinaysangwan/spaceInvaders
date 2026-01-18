@@ -99,6 +99,8 @@ player_update :: proc(player :^Player, dt :f32)
         bullet.pos = {player.pos.x, player.pos.y - 10}
         bullet.prevPos = bullet.pos
         Array_add(&player.bullets, &bullet)
+
+        audio_play(SoundID.SHOOT)
       }
     }
   }

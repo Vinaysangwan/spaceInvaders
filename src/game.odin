@@ -1,6 +1,8 @@
 package main
 
 import "core:strings"
+import "vendor:glfw"
+
 // #############################################################################
 //                           Constants
 // #############################################################################
@@ -21,6 +23,8 @@ GameState :: struct
   currentScreen :Screen,
   menuScreen :MenuScreen,
   playScreen :PlayScreen,
+
+  debugMode :bool
 }
 
 // #############################################################################
@@ -33,6 +37,8 @@ gameState :GameState
 // #############################################################################
 game_init :: proc()
 {
+  gameState.debugMode = false
+  
   // Init Ui Stuff
   {
     ui_string_builder = strings.builder_make()
@@ -78,6 +84,11 @@ game_init :: proc()
 
 game_update :: proc(dt :f32)
 {
+  if (key_pressed(glfw.KEY_D))
+  {
+    gameState.debugMode = !gameState.debugMode
+  }
+  
   switch(gameState.currentScreen)
   {
   case Screen.MENU:
@@ -113,7 +124,10 @@ game_render :: proc(alpha :f32)
   }
   }
 
-  draw_ui_FPS(Vec2{f32(inputState.windowSize.x - 150), 16})
+  if (gameState.debugMode)
+  {
+    draw_ui_FPS(Vec2{f32(inputState.windowSize.x - 150), 16})
+  }
 }
 
 game_cleanup :: proc()
