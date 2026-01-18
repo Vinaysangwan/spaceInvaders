@@ -1,16 +1,23 @@
 package main
 
-import fs "vendor:fontstash"
+import "core:mem"
+import "core:log"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
-import "base:runtime"
 import "vendor:stb/image"
+import tt "vendor:stb/truetype"
+import "base:runtime"
 import "core:c"
+import "core:os"
 
 // #############################################################################
 //                           Constants
 // #############################################################################
 TEXTURE_PATH :: "assets/textures/TEXTURE_ATLAS.png"
+FONT_ATLAS_SIZE :: 512
+FIRST_CHAR :: 32
+LAST_CHAR :: 127
+PADDING :: 2
 
 // #############################################################################
 //                           Structs
@@ -20,6 +27,7 @@ GLContext :: struct
   programID :u32,
   textureID :u32,
   transformSBOID :u32,
+  fontAtlashID :u32,
   
   orthoProjectionLocation :i32
 }
@@ -73,13 +81,128 @@ gl_get_ShaderID :: proc(shaderPath: string, type :u32) -> u32
   if(success == 0)
   {
     infoLog := make([]u8, 1024)
-    gl.GetShaderInfoLog(shaderID, 1024, nil, &infoLog[0])
-    SM_ASSERT(false, "Failed to Compile [%s]: %s", shaderType, cast(cstring)&infoLog[0])
+    logLength :i32 = 0
+    gl.GetShaderInfoLog(shaderID, 1024, &logLength, &infoLog[0])
+    
+    if (logLength < i32(len(infoLog)))
+    {
+      infoLog[logLength] = 0     
+    }
+    else
+    {
+      infoLog[len(infoLog) - 1] = 0
+    }
+    
+    SM_ASSERT(false, "Failed to Compile [%s]: %s", shaderType, cast(cstring)(&infoLog[0]))
     return 0
   }
   
   return shaderID
 }
+
+load_font :: proc(filePath: string, fontSize: i32)
+{
+  // --------------------------------------------------
+  // Load TTF
+  // --------------------------------------------------
+  ttfData, ok := os.read_entire_file(filePath)
+  SM_ASSERT(ok, "Failed to open font: {}", filePath)
+
+  fontInfo: tt.fontinfo
+  SM_ASSERT(bool(tt.InitFont(&fontInfo, &ttfData[0], 0)), "Failed to init stb font")
+
+  scale := tt.ScaleForPixelHeight(&fontInfo, f32(fontSize))
+
+  // Font metrics (equivalent to FreeType size->metrics)
+  ascent, descent, lineGap: i32
+  tt.GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap)
+
+  renderData.fontHeight = max(renderData.fontHeight, i32(f32(ascent - descent) * scale))
+
+  renderData.baseFontSize = fontSize
+
+  // --------------------------------------------------
+  // Atlas buffer
+  // --------------------------------------------------
+  atlas := make([]u8, FONT_ATLAS_SIZE * FONT_ATLAS_SIZE)
+  mem.set(&atlas[0], 0, len(atlas))
+
+  row: i32 = 0
+  col: i32 = PADDING
+
+  // --------------------------------------------------
+  // Glyph loop (ASCII 32–126)
+  // --------------------------------------------------
+  for ch: rune = FIRST_CHAR; ch < LAST_CHAR; ch += 1
+  {
+    glyphIndex := tt.FindGlyphIndex(&fontInfo, ch)
+
+    // Advance (FreeType: advance.x >> 6)
+    advance, lsb: i32
+    tt.GetGlyphHMetrics(&fontInfo, glyphIndex, &advance, &lsb)
+
+    // Bitmap box (relative to baseline)
+    x0, y0, x1, y1: i32
+    tt.GetGlyphBitmapBox(
+      &fontInfo,
+      glyphIndex,
+      scale, scale,
+      &x0, &y0, &x1, &y1,
+    )
+
+    width  := x1 - x0
+    height := y1 - y0
+
+    if col + width + PADDING >= FONT_ATLAS_SIZE 
+    {
+      col = PADDING
+      row += fontSize
+    }
+
+    // Rasterize glyph bitmap into atlas
+    tt.MakeGlyphBitmap(
+      &fontInfo,
+      &atlas[row * FONT_ATLAS_SIZE + col],
+      width,
+      height,
+      FONT_ATLAS_SIZE,
+      scale, scale,
+      glyphIndex,
+    )
+
+    // --------------------------------------------------
+    // Glyph data (matches FreeType semantics)
+    // --------------------------------------------------
+    g := &renderData.glyphs[ch]
+
+    g.textureCoords = IVec2{col, row}
+    g.size          = IVec2{width, height}
+
+    g.advance = Vec2{f32(advance) * scale, 0}
+
+    // IMPORTANT:
+    // FreeType bitmap_top  == ascent above baseline
+    // stb y0 is NEGATIVE above baseline → invert sign
+    g.offSet = Vec2{f32(x0), f32(-y0)}
+
+    col += width + PADDING
+  }
+
+  // --------------------------------------------------
+  // Upload OpenGL texture (same as C++)
+  // --------------------------------------------------
+  gl.GenTextures(1, &glContext.fontAtlashID)
+  gl.ActiveTexture(gl.TEXTURE1)
+  gl.BindTexture(gl.TEXTURE_2D, glContext.fontAtlashID)
+
+  gl.TexImage2D(gl.TEXTURE_2D, 0, gl.R8, FONT_ATLAS_SIZE, FONT_ATLAS_SIZE, 0, gl.RED, gl.UNSIGNED_BYTE, &atlas[0])
+
+  gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+  gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+  gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+  gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+}
+
 
 // #############################################################################
 //                           Functions(External)
@@ -155,6 +278,11 @@ gl_init :: proc() -> bool
 
     gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
     image.image_free(data)
+  }
+
+  // Load Fonts
+  {
+    load_font("assets/fonts/AtariClassic-gry3.ttf", 8)
   }
 
   // Transform Storage Buffer

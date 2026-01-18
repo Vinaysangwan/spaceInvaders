@@ -1,6 +1,5 @@
 package main
 
-import fs "vendor:fontstash"
 import "core:math/rand"
 import "vendor:glfw"
 
@@ -123,7 +122,6 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
     else if(player.alive && collision_Rect_Circle(&player_collision_area, &bomb_collision_area))
     {
       player_kill(player)
-      SM_TRACE("Final Score: {}", playScreen.score)
       Array_swap_remove(&playScreen.bombs, bomb_idx)
     }
     else
@@ -147,7 +145,6 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
       {
         hit = true
         playScreen.score += 1
-        SM_TRACE("Score: {}", playScreen.score)
         
         Array_swap_remove(&playScreen.enemies, enemy_idx)
         break
@@ -193,4 +190,7 @@ playScreen_render :: proc(playScreen :^PlayScreen, alpha :f32)
     
     draw_sprite(SpriteID.BOMB, bombRenderPos)
   }
+
+  // Render UI
+  draw_format_ui_text(Vec2{0, 16}, 2, Vec4{255, 0, 0, 255}, "Score: {}", playScreen.score)
 }

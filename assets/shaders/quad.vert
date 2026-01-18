@@ -5,6 +5,7 @@
 // Outputs
 layout (location = 0) out vec2 outTexCoords;
 layout (location = 1) out vec4 outTintColor;
+layout (location = 2) out flat int outRenderOption;
 
 // Uniforms
 uniform mat4 uOrthoProjection;
@@ -17,6 +18,7 @@ struct Transform
   vec2 pos;
   vec2 size;
   vec4 tintColor;
+  int renderOption;
 };
 
 // Buffers
@@ -67,4 +69,5 @@ void main()
 
   outTexCoords = texCoords[gl_VertexID];
   outTintColor = transform.tintColor;
+  outRenderOption = transform.renderOption;  
 }

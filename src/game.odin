@@ -1,5 +1,6 @@
 package main
 
+import "core:strings"
 // #############################################################################
 //                           Constants
 // #############################################################################
@@ -32,6 +33,12 @@ gameState :GameState
 // #############################################################################
 game_init :: proc()
 {
+  // Init Ui Stuff
+  {
+    ui_string_builder = strings.builder_make()
+    FPS = 0
+  }
+  
   // Init Camera
   {
     // Game Camera
@@ -105,4 +112,12 @@ game_render :: proc(alpha :f32)
     break
   }
   }
+
+  draw_ui_FPS(Vec2{f32(inputState.windowSize.x - 150), 16})
+}
+
+game_cleanup :: proc()
+{
+  strings.builder_reset(&ui_string_builder)
+  strings.builder_destroy(&ui_string_builder)
 }

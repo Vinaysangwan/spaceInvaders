@@ -1,6 +1,7 @@
 package main
 
 import "vendor:glfw"
+import "core:strconv"
 
 // #############################################################################
 //                          Constants 
@@ -16,7 +17,8 @@ MenuScreen :: struct
   quitButton :Button,
 
   // Audio
-  bg_music_ID :SoundID
+  bg_music_ID :SoundID,
+  fps :f32
 }
 
 // #############################################################################
@@ -38,10 +40,13 @@ menuScreen_init :: proc(menuScreen :^MenuScreen)
 
   // Init BG Music ID
   menuScreen.bg_music_ID = SoundID.BG_MENU
+  menuScreen.fps = 0.0
 }
 
 menuScreen_update :: proc(menuScreen :^MenuScreen, dt :f32)
 {
+  menuScreen.fps = 1/dt
+  
   // Play BG Music
   audio_play(menuScreen.bg_music_ID, true)
   

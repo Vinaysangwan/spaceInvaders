@@ -15,6 +15,8 @@ main :: proc()
   {
     return
   }
+  defer window_cleanup()  
+
   window_set_icon("assets/textures/window_icon.png")
   enable_vSync(false)
 
@@ -27,15 +29,19 @@ main :: proc()
 
   // Init Audio
   audio_init()
+  defer audio_cleanup()
 
   // Init Game
   game_init()
+  defer game_cleanup()
 
   lastTime := glfw.GetTime()
   currentTime := 0.0
   dt :f32 = 0.0
   accumulatedTime :f32 = 0.0
   alpha :f32 = 0.0
+  fps_counter :i32 = 0
+  fps_timer :f32 = 0.0
   
   // Main Game Loop
   for (running)
@@ -44,6 +50,16 @@ main :: proc()
     currentTime = glfw.GetTime()
     dt = f32(currentTime - lastTime)
     lastTime = currentTime
+
+    // FPS Calculation
+    fps_counter += 1
+    fps_timer += dt
+    if (fps_timer >= 1.0)
+    {
+      FPS = fps_counter
+      fps_counter = 0
+      fps_timer -= 1.0
+    }
 
     window_update()
 
@@ -66,8 +82,4 @@ main :: proc()
     
     window_swap_buffers()
   }
-
-  gl_cleanup()
-  audio_cleanup()
-  window_cleanup()
 }
