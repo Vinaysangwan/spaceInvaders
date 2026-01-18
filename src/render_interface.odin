@@ -190,7 +190,7 @@ draw_ui_text :: proc(text: string, pos: Vec2, fontSize: i32, color := Vec4{255, 
   }
 }
 
-draw_format_ui_text :: proc(pos :Vec2, fontSize :i32, color :Vec4, text :string, args :..any)
+draw_ui_format_text :: proc(pos :Vec2, fontSize :i32, color :Vec4, text :string, args :..any)
 {
   strings.builder_reset(&ui_string_builder)
   text := fmt.sbprintf(&ui_string_builder, text, ..args)
@@ -200,5 +200,5 @@ draw_format_ui_text :: proc(pos :Vec2, fontSize :i32, color :Vec4, text :string,
 
 draw_ui_FPS :: proc(pos :Vec2, fontSize: i32 = 2, color := Vec4{0, 255, 0, 255})
 {
-  draw_format_ui_text(pos, fontSize, color, "FPS: {}", FPS)
+  draw_ui_format_text(pos, fontSize, color, "FPS: {}", FPS)
 }

@@ -22,6 +22,7 @@ Player :: struct
 {
   spriteID :SpriteID,
   alive :bool,
+  won :bool,
   
   size :Vec2,
 
@@ -52,6 +53,7 @@ player_init :: proc(player :^Player)
 {
   player.spriteID = SpriteID.SHIP1
   player.alive = true
+  player.won = false
 
   player.size = ivec2_f(SPRITES[player.spriteID].size)
 
@@ -130,11 +132,14 @@ player_render :: proc(player :^Player, alpha :f32)
   playerRenderPos := lerp_vec2(alpha, player.prevPos, player.pos)
   draw_sprite(player.spriteID, playerRenderPos)
 
-  for i :i32=0; i<player.bullets.count; i+= 1
+  if (!player.won)
   {
-    bullet := &player.bullets.elements[i]
+    for i :i32=0; i<player.bullets.count; i+= 1
+    {
+      bullet := &player.bullets.elements[i]
 
-    bulletRenderPos := lerp_vec2(alpha, bullet.prevPos, bullet.pos)
-    draw_sprite(SpriteID.BULLET, bulletRenderPos)
+      bulletRenderPos := lerp_vec2(alpha, bullet.prevPos, bullet.pos)
+      draw_sprite(SpriteID.BULLET, bulletRenderPos)
+    }
   }
 }

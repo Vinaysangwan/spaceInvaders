@@ -108,8 +108,6 @@ playScreen_init :: proc(playScreen :^PlayScreen)
 
 playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
 {
-   
-
   // Handle States
   switch(playScreen.state)
   {
@@ -122,6 +120,8 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
     }
     else if(playScreen.score == 10)   // Game Won
     {
+      playScreen.player.won = true
+      playScreen.player.pos.x = WORLD_WIDTH / 2
       playScreen.state = PlayState.GameWon
     }
 
@@ -223,7 +223,7 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
 
   case PlayState.Menu:
   {
-    if (button_pressed(&playScreen.continueButton) || key_pressed(glfw.KEY_ESCAPE))
+    if (key_pressed(glfw.KEY_ENTER) || key_pressed(glfw.KEY_ESCAPE) || button_pressed(&playScreen.continueButton))
     {
       playScreen.state = PlayState.Play
     }
@@ -231,12 +231,16 @@ playScreen_update :: proc(playScreen :^PlayScreen, dt :f32)
   
   case PlayState.GameOver:
   {
-
+    if (key_pressed(glfw.KEY_ENTER))
+    {
+      gameState.currentScreen = Screen.MENU
+      menuScreen_init(&gameState.menuScreen)
+    }
   }
 
   case PlayState.GameWon:
   {
-    if (button_pressed(&playScreen.playAgainButton))
+    if (key_down(glfw.KEY_ENTER) || button_pressed(&playScreen.playAgainButton))
     {
       playScreen_init(playScreen)
     }
@@ -288,24 +292,41 @@ playScreen_render :: proc(playScreen :^PlayScreen, alpha :f32)
       
       draw_sprite(SpriteID.BOMB, bombRenderPos)
     }
+
+    draw_ui_format_text(Vec2{0, 16}, 2, Vec4{255, 0, 0, 255}, "Score: {}", playScreen.score)
   }
 
   case PlayState.Menu:
   {
     draw_ui_button(&playScreen.continueButton)
+
+    draw_ui_text("Menu", Vec2{f32(inputState.windowSize.x) / 2 - 150, f32(inputState.windowSize.y) / 2 - 200}, 8)
   }
  
   case PlayState.GameOver:
   {
-
+    draw_ui_text("Game Over", Vec2{f32(inputState.windowSize.x) / 2 - 250, f32(inputState.windowSize.y) / 2 - 200}, 8)
+    draw_ui_format_text(
+      Vec2{f32(inputState.windowSize.x) / 2 - 150, f32(inputState.windowSize.y) / 2 - 100}, 
+      6, 
+      Vec4{255, 0, 0, 255}, 
+      "Score: {}", 
+      playScreen.score
+    )
   }
   
   case PlayState.GameWon:
   {
     draw_ui_button(&playScreen.playAgainButton)
+
+    draw_ui_text("You WON!", Vec2{f32(inputState.windowSize.x) / 2 - 200, f32(inputState.windowSize.y) / 2 - 200}, 8)
+    draw_ui_format_text(
+      Vec2{f32(inputState.windowSize.x) / 2 - 150, f32(inputState.windowSize.y) / 2 - 100}, 
+      6, 
+      Vec4{255, 0, 0, 255}, 
+      "Score: {}", 
+      playScreen.score
+    )
   }
- }
-  
-  // Render UI
-  draw_format_ui_text(Vec2{0, 16}, 2, Vec4{255, 0, 0, 255}, "Score: {}", playScreen.score)
+  }
 }

@@ -55,7 +55,7 @@ menuScreen_update :: proc(menuScreen :^MenuScreen, dt :f32)
   {
     running = false
   }
-  else if(key_down(glfw.KEY_ENTER) || (button_pressed(&menuScreen.playButton)))
+  else if(key_pressed(glfw.KEY_ENTER) || (button_pressed(&menuScreen.playButton)))
   {
     audio_stop(menuScreen.bg_music_ID)
     
